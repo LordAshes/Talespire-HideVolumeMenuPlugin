@@ -19,7 +19,7 @@ namespace LordAshes
         // Plugin info
         public const string Name = "Hide Volume Menu Plug-In";
         public const string Guid = "org.lordashes.plugins.hidevolumemenu";
-        public const string Version = "1.0.1.0"; 
+        public const string Version = "1.0.3.0"; 
 
         public class StateHideVolume
         {
@@ -73,12 +73,13 @@ namespace LordAshes
 
         // Configuration
         static string data = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"/CustomData/";
+        static HideVolumeMenuPlugin self = null;
 
         private ConfigEntry<KeyboardShortcut> triggerKey { get; set; }
         private static bool boardDataLoaded = false;
         private static bool menuOpen = false;
         private static bool hideVolumesShowing = false;
-        private Dictionary<NGuid, StateHideVolume> currentStates = new Dictionary<NGuid, StateHideVolume>();
+        public Dictionary<NGuid, StateHideVolume> CurrentHideVolumeStates = new Dictionary<NGuid, StateHideVolume>();
 
         private static class MenuLayout
         {
@@ -93,6 +94,16 @@ namespace LordAshes
             public static float VerticalOffset { get; set; } = 0.25f;
             public static float FontSize = 6.0f;
         }
+
+        /// <summary>
+        /// Method to return instance of plugin
+        /// </summary>
+        /// <returns></returns>
+        public static HideVolumeMenuPlugin Instance()
+        {
+            return self; 
+        }
+
 
         /// <summary>
         /// Function for initializing plugin
@@ -112,6 +123,8 @@ namespace LordAshes
 
             LabelInfo.VerticalOffset = Config.Bind("Labels", "Vertical Offset", 0.25f).Value;
             LabelInfo.FontSize = Config.Bind("Labels", "Font Size", 6.0f).Value;
+
+            self = this;
 
             var harmony = new Harmony(Guid);
             harmony.PatchAll();
@@ -160,11 +173,11 @@ namespace LordAshes
                     foreach (Transform hvt in hvs)
                     {
                         HideVolumeItem hv = hvt.GetComponent<HideVolumeItem>();
-                        if (!currentStates.ContainsKey(hv.HideVolume.Id))
+                        if (!CurrentHideVolumeStates.ContainsKey(hv.HideVolume.Id))
                         {
-                            currentStates.Add(hv.HideVolume.Id, new StateHideVolume(hv, ()=> { Save(); }));
+                            CurrentHideVolumeStates.Add(hv.HideVolume.Id, new StateHideVolume(hv, ()=> { Save(); }));
                         }
-                        StateHideVolume state = currentStates[hv.HideVolume.Id];
+                        StateHideVolume state = CurrentHideVolumeStates[hv.HideVolume.Id];
                         state.State = GUI.Toggle(new Rect(offsetX, offsetY, 20, 20), state.State, "");
                         if(GUI.Button(new Rect(offsetX+30, offsetY, MenuLayout.HorizontalOffset-35, 20), state.Name))
                         {
@@ -191,28 +204,28 @@ namespace LordAshes
                                 if (guid != NGuid.Empty)
                                 {
                                     Debug.Log("Hide Volume Menu: Restoring Hide Volume '" + guid.ToString() + "' Name And State...");
-                                    if (currentStates.ContainsKey(guid))
+                                    if (CurrentHideVolumeStates.ContainsKey(guid))
                                     {
-                                        currentStates[guid].Volume.name = item.Value;
+                                        CurrentHideVolumeStates[guid].Volume.name = item.Value;
 
-                                        SimpleSingletonBehaviour<HideVolumeManager>.Instance.SetHideVolumeState(currentStates[guid].Volume.HideVolume);
-                                        GameObject goLabel = GameObject.Find("HideVolume:Label:" + currentStates[guid].Volume.HideVolume.Id);
+                                        SimpleSingletonBehaviour<HideVolumeManager>.Instance.SetHideVolumeState(CurrentHideVolumeStates[guid].Volume.HideVolume);
+                                        GameObject goLabel = GameObject.Find("HideVolume:Label:" + CurrentHideVolumeStates[guid].Volume.HideVolume.Id);
                                         TextMeshPro label = null;
                                         if (goLabel == null)
                                         {
-                                            Debug.Log("Hide Volume Menu: Creating Label For Hide Volume '" + currentStates[guid].Name + "'...");
+                                            Debug.Log("Hide Volume Menu: Creating Label For Hide Volume '" + CurrentHideVolumeStates[guid].Name + "'...");
                                             goLabel = new GameObject();
-                                            goLabel.name = "HideVolume:Label:" + currentStates[guid].Volume.HideVolume.Id;
+                                            goLabel.name = "HideVolume:Label:" + CurrentHideVolumeStates[guid].Volume.HideVolume.Id;
                                             label = goLabel.AddComponent<TextMeshPro>();
                                             label.alignment = TextAlignmentOptions.Center;
                                             label.fontSize = 0.0f;
-                                            label.transform.position = new Vector3(currentStates[guid].Volume.HideVolume.Bounds.center.x, currentStates[guid].Volume.HideVolume.Bounds.max.y + LabelInfo.VerticalOffset, currentStates[guid].Volume.HideVolume.Bounds.center.z);
+                                            label.transform.position = new Vector3(CurrentHideVolumeStates[guid].Volume.HideVolume.Bounds.center.x, CurrentHideVolumeStates[guid].Volume.HideVolume.Bounds.max.y + LabelInfo.VerticalOffset, CurrentHideVolumeStates[guid].Volume.HideVolume.Bounds.center.z);
                                         }
                                         else
                                         {
                                             label = goLabel.GetComponent<TextMeshPro>();
                                         }
-                                        label.text = currentStates[guid].Name;
+                                        label.text = CurrentHideVolumeStates[guid].Name;
                                     }
                                 }
                             }
@@ -223,7 +236,7 @@ namespace LordAshes
 
             if(hideVolumesShowing)
             {
-                foreach (StateHideVolume item in currentStates.Values)
+                foreach (StateHideVolume item in CurrentHideVolumeStates.Values)
                 {
                     GameObject go = GameObject.Find("HideVolume:Label:" + item.Volume.HideVolume.Id);
                     if (go != null)
@@ -239,7 +252,7 @@ namespace LordAshes
         {
             Debug.Log("Hide Volume Menu: Saving Hide Volume Changes...");
             Dictionary<string, string> names = new Dictionary<string, string>();
-            foreach (StateHideVolume item in currentStates.Values)
+            foreach (StateHideVolume item in CurrentHideVolumeStates.Values)
             {
                 names.Add(item.Volume.HideVolume.Id.ToString(), item.Volume.name);
                 Debug.Log("Hide Volume Menu: Setting '" + item.Name + "' To '" + item.State + "'...");
