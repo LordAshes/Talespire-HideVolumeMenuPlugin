@@ -11,6 +11,7 @@ Donate: http://198.91.243.185/TalespireDonate/Donate.php
 ## Change Log
 
 ```
+1.1.0: Addes support for remote request via Asset Data Plugin
 1.0.3: Exposed instance of the plugin via Instance() method to allow it to be used as dependency
 1.0.2: Added place holder to ensure CustomData sub-folder is created. No plugin change
 1.0.1: Bug fix: Exeption no longer thrown if save is done when labels have no been shown
