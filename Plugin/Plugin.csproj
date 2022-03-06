@@ -39,6 +39,9 @@
     <Reference Include="0Harmony">
       <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\TaleSpire\profiles\Modded\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
+    <Reference Include="AssetDataPlugin">
+      <HintPath>..\..\..\..\AppData\Roaming\r2modmanPlus-local\TaleSpire\profiles\Modded\BepInEx\plugins\LordAshes-AssetDataPlugin\AssetDataPlugin.dll</HintPath>
+    </Reference>
     <Reference Include="BepInEx">
       <HintPath>D:\moddingtalespire-2.3.0\bepinexbin\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>

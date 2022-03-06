@@ -14,12 +14,13 @@ using UnityEngine;
 namespace LordAshes
 {
     [BepInPlugin(Guid, Name, Version)]
+    [BepInDependency(AssetDataPlugin.Guid, BepInDependency.DependencyFlags.HardDependency)]
     public partial class HideVolumeMenuPlugin : BaseUnityPlugin
     {
         // Plugin info
         public const string Name = "Hide Volume Menu Plug-In";
         public const string Guid = "org.lordashes.plugins.hidevolumemenu";
-        public const string Version = "1.0.3.0"; 
+        public const string Version = "1.1.0.0"; 
 
         public class StateHideVolume
         {
@@ -128,6 +129,21 @@ namespace LordAshes
 
             var harmony = new Harmony(Guid);
             harmony.PatchAll();
+
+            AssetDataPlugin.Subscribe(HideVolumeMenuPlugin.Guid, (change)=>
+            {
+                Debug.Log("Hide Volume Menu: Remote Request " + change.value);
+                string hvName = change.value.ToString().Split(',')[0];
+                string hvState = change.value.ToString().Split(',')[1];
+                foreach(StateHideVolume state in CurrentHideVolumeStates.Values)
+                {
+                    if(state.Name==hvName)
+                    {
+                        Debug.Log("Hide Volume Menu: Setting '"+state.Name+"' To '"+hvState+"'");
+                        state.State = ("[0][OFF][FLASE]".Contains(hvState.ToUpper()) ? false : true);
+                    }
+                }
+            });
 
             Utility.PostOnMainPage(this.GetType());
         }
